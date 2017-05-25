@@ -9,7 +9,6 @@ class Screen {
 private:
 
     HWND window = NULL;
-    HWND textArea = NULL;
 
     static BOOL CALLBACK EnumThreadWndProc(HWND hwnd, LPARAM lParam) {
         HWND* hwndPtr = (HWND*)lParam;
@@ -26,7 +25,6 @@ public:
 
     Screen() {
         EnumThreadWindows(GetCurrentThreadId(), EnumThreadWndProc, (LPARAM)&window);
-        textArea = FindWindowEx(window, NULL, "VimTextArea", "Vim text area");
     }
 
     char* GetScreen() {
@@ -50,7 +48,7 @@ public:
     }
 
     int GetFullScreen() {
-        return GetWindowLong(window, GWL_STYLE) & WS_CAPTION ? 0 : 1;
+        return GetWindowLong(window, GWL_STYLE) & WS_OVERLAPPEDWINDOW ? 0 : 1;
     }
 
     void Maximize() {
@@ -58,43 +56,39 @@ public:
     }
 
     void EnterFullScreen() {
-        RECT rect;
-        GetWindowRect(textArea, &rect);
+        WINDOWPLACEMENT windowPlacement = { sizeof(windowPlacement) };
+        MONITORINFO monitorInfo = { sizeof(monitorInfo) };
 
-        HMONITOR monitor = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
-        MONITORINFO monitorInfo;
-        monitorInfo.cbSize = sizeof(monitorInfo);
-        GetMonitorInfo(monitor, &monitorInfo);
+        if (GetWindowPlacement(window, &windowPlacement) &&
+            GetMonitorInfo(MonitorFromWindow(window, MONITOR_DEFAULTTOPRIMARY), &monitorInfo)) {
 
-        int x = monitorInfo.rcMonitor.left;
-        int y = monitorInfo.rcMonitor.top;
-        int dx = monitorInfo.rcMonitor.right - x;
-        int dy = monitorInfo.rcMonitor.bottom - y;
+            DWORD windowStyle = GetWindowLong(window, GWL_STYLE);
 
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_EXSTYLE) & ~WS_BORDER);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) & ~WS_CAPTION);
-        SetWindowLong(window, GWL_EXSTYLE, GetWindowLong(window, GWL_STYLE) & ~WS_EX_CLIENTEDGE);
-        SetWindowLong(window, GWL_EXSTYLE, GetWindowLong(window, GWL_STYLE) & ~WS_EX_WINDOWEDGE);
-        SetWindowPos(window, HWND_TOP, x, y, dx, dy, SWP_SHOWWINDOW);
-
-        SetWindowLong(textArea, GWL_EXSTYLE, GetWindowLong(textArea, GWL_STYLE) & ~WS_EX_WINDOWEDGE);
-        SetWindowPos(textArea, HWND_TOP, 0, 0, dx, dy, SWP_SHOWWINDOW);
+            SetWindowLong(window, GWL_STYLE, windowStyle & ~WS_OVERLAPPEDWINDOW);
+            SetWindowPos(
+                window,
+                HWND_TOP,
+                monitorInfo.rcMonitor.left,
+                monitorInfo.rcMonitor.top,
+                monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+                monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+        }
     }
 
     void ExitFullScreen() {
-        SetWindowLong(window, GWL_EXSTYLE, GetWindowLong(window, GWL_EXSTYLE) | WS_BORDER);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_CAPTION);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_SYSMENU);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_MINIMIZEBOX);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_MAXIMIZEBOX);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_SYSMENU);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_EX_CLIENTEDGE);
-        SetWindowLong(window, GWL_EXSTYLE, GetWindowLong(window, GWL_EXSTYLE) | WS_EX_WINDOWEDGE);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_THICKFRAME);
-        SetWindowLong(window, GWL_STYLE, GetWindowLong(window, GWL_STYLE) | WS_DLGFRAME);
+        WINDOWPLACEMENT windowPlacement = { sizeof(windowPlacement) };
+
+        DWORD windowStyle = GetWindowLong(window, GWL_STYLE);
+
+        SetWindowLong(window, GWL_STYLE, windowStyle | WS_OVERLAPPEDWINDOW);
+        SetWindowPlacement(window, &windowPlacement);
+        SetWindowPos(window, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
     }
 
     void FixBackground(char *color) {
+        HWND textArea = FindWindowEx(window, NULL, "VimTextArea", "Vim text area");
+
         if (textArea == NULL) {
             return;
         }
