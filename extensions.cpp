@@ -55,6 +55,10 @@ public:
         SendMessage(window, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
     }
 
+    void Restore() {
+        SendMessage(window, WM_SYSCOMMAND, SC_RESTORE, 0);
+    }
+
     void EnterFullScreen() {
         WINDOWPLACEMENT windowPlacement = { sizeof(windowPlacement) };
         MONITORINFO monitorInfo = { sizeof(monitorInfo) };
@@ -130,6 +134,10 @@ extern "C" {
 
     __declspec(dllexport) void Maximize() {
         (new Screen)->Maximize();
+    }
+
+    __declspec(dllexport) void Restore() {
+        (new Screen)->Restore();
     }
 
     __declspec(dllexport) void EnterFullScreen() {
