@@ -1,68 +1,44 @@
-# vimdows
+# What is it
 
-Windows-native Vim plugin for better GUI experience
+Vim plugin that makes GUI experience better under Windows:
 
-## How to get or build
+- automates maximizing and restoring the window
+- provides full screen functionality
+- fixes the lower-right window border when maximized
+- remembers the window position and size
 
-This is optional. A pre-built 64-bit binary is available on [releases](https://github.com/GrzegorzKozub/vimdows/releases) page. If you want to build `vimdows.dll` yourself with [mingw-w64](http://mingw-w64.org/) use the following command:
+# How to install
 
-`g++ vimdows.cpp -o vimdows.dll -shared -lgdi32 -O3 -s -static`
+## Plugin installation
 
-## How to install
-
-Copy `vimdows.dll` to your Vim installation directory. The same place where `gvim.exe` is. Then, the following snippet gives you a convenient abstraction over functions exported by `vimdows.dll`. Place it in your `vimrc`.
+Use your favorite plugin manager. I prefer [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-if has('win32') && has('gui_running')
-
-    let s:vimdows_file = $VIMRUNTIME . '/vimdows.dll'
-
-    function! GetScreen()
-        return libcall(s:vimdows_file, 'GetScreen', '')
-    endfunction
-
-    function! GetMaximized()
-        return libcallnr(s:vimdows_file, 'GetMaximized', '')
-    endfunction
-
-    function! GetFullScreen()
-        return libcallnr(s:vimdows_file, 'GetFullScreen', '')
-    endfunction
-
-    function! Maximize()
-        call libcall(s:vimdows_file, 'Maximize', '')
-    endfunction
-
-    function! Restore()
-        call libcall(s:vimdows_file, 'Restore', '')
-    endfunction
-
-    function! EnterFullScreen()
-        call libcall(s:vimdows_file, 'EnterFullScreen', '')
-    endfunction
-
-    function! ExitFullScreen()
-        call libcall(s:vimdows_file, 'ExitFullScreen', '')
-    endfunction
-
-    function! FixBackground()
-        call libcall(s:vimdows_file, 'FixBackground', strpart(synIDattr(hlID('Normal'), 'bg#'), 1))
-    endfunction
-
-endif
+Plug 'GrzegorzKozub/vimdows'
 ```
 
-## How to use
+## Required vimrc changes
 
-The plugin provides functions that aim to make GVim experience under Windows nicer. Let's take a closer look at each of them now.
+This plugin uses `g:VIMDOWS_SCREEN` variable stored in `viminfo` to save and restore the window position and size. This depends on the following lines added somewhere to the top of your `vimrc`. The first one enables GVim to store all-caps global variables in `viminfo` and the other one reads it early:
 
-### GetScreen
+```
+let &viminfo = &viminfo . ',!'
+try | rviminfo | catch | endtry
+```
+
+If you don't like this, set `g:vimdows_screen_memento` to `0` to disable this functionality.
+
+# Usage
+
+The plugin provides functions that aim to make GVim experience under Windows nicer. By default, some of them are mapped to keys and some run in a response to GVim events.
+
+## vimdows#get_screen
 
 Returns a JSON object that describes the current screen resolution and scaling: `{ 'width': 3200, 'height': 1800, 'dpi': 240 }`. Example use:
 
 ```
 if has('win32') && has('gui_running')
-    let s:screen = eval(GetScreen())
+    let s:screen = eval(vimdows#get_screen())
     if s:screen.height == 1800 && s:screen.dpi == 240
         set guifont=Fira\ Code\ Retina:h13
         set columns=117
@@ -72,55 +48,52 @@ if has('win32') && has('gui_running')
 endif
 ```
 
-### GetMaximized and GetFullScreen
+## vimdows#get_maximized and vimdows#get_full_screen
 
-Return `1` if GVim is, respectively, maximized or in full screen and `0` otherwise. Examples will follow.
+Return `1` if GVim is, respectively, maximized or in full screen and `0` otherwise.
 
-### Maximize and Restore
+## vimdows#maximize and vimdows#restore
 
-The former maximizes GVim window and the latter restores it. I like to use `F10` to switch between maximized and restored:
+The former maximizes GVim window and the latter restores it.
 
-```
-if has('win32') && has('gui_running')
-    function! MaximizedToggle()
-        if GetFullScreen() | return | endif
-        if GetMaximized() | call Restore() | else | call Maximize() | endif
-    endfunction
-    nmap <silent> <F10> :call MaximizedToggle()<CR>
-endif
-```
+## vimdows#enter_full_screen and vimdows#exit_full_screen
 
-Light frame on the right and the bottom fix will follow. 
+Full screen mode hides title bar, menu, toolbar and taskbar.
 
-### EnterFullScreen and ExitFullScreen
+## vimdows#maximized_toggle and vimdows#full_screen_toggle
 
-Quite obvious what they do. The code under the hood takes inspiration from [Raymond Chen](https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353). I like to match Chrome and Visual Studio Code shortcut here, so I use `F11` for a handy toggle:
+These are the toggle variants of the above functions. `F10` will toggle maximized and `F11` will toggle full screen. If you don't like these mappings, disable them in your `vimrc`:
 
 ```
-if has('win32') && has('gui_running')
-    function! FullScreenToggle()
-        if GetFullScreen() | call ExitFullScreen() | else | call EnterFullScreen() | endif
-    endfunction
-    nmap <silent> <F11> :call FullScreenToggle()<CR>
-endif
+let g:vimdows_mappings = 0
 ```
 
-Light frame on the right and the bottom fix will follow. 
+## vimdows#fix_background
 
-### FixBackground
+When GVim is maximized or in full screen there's a bright frame on the right side and on the bottom side of the text area that does not match current GVim theme. To correct this you can use `vimdows#fix_background`.
 
-When GVim is maximized or in full screen there's a frame on the right side and on the bottom side of the text area that does not match current GVim theme. To correct this we need to call `FixBackground` as wrapped above (passing a hex representation of the current background color). The fix needs to run every time GVim gets maximized or enters full screen. That's the first event handler. The other one caters for changing themes when maximized or in full screen.
+This function is called every time GVim gets maximized or enters full screen and also when changing themes when maximized or in full screen. You can opt-out in your `vimrc` by:
 
 ```
-if has('win32') && has('gui_running')
-    augroup FixBackgroundWhenColorSchemeChanges
-        autocmd!
-        autocmd ColorScheme * call FixBackground()
-    augroup END
-    augroup FixBackgroundWhenResizing
-        autocmd!
-        autocmd VimResized * if GetMaximized() || GetFullScreen() | call FixBackground() | endif
-    augroup END
-endif
+let g:vimdows_background_fixes = 0
 ```
 
+Then you will be able to use this function yourself.
+
+## vimdows#save_screen and vimdows#restore_screen(allowFullScreen)
+
+In order to work, this requires the `vimrc` changes described above. The following GVim window parameters are saved: position, size, is it maximized, is it full screen. The `allowFullScreen` parameter can be used to force GVim to go out of full screen on next launch.
+
+Your window will be saved when you exit GVim and restored when you launch GVim next time. You can disable this in your `vimrc` like so:
+
+```
+let g:vimdows_screen_memento = 0
+```
+
+# References
+
+Lots of inspiration and some code taken from:
+
+- [vim-shell](https://github.com/xolox/vim-shell/)
+- [gvimfullscreen](https://github.com/xqin/gvimfullscreen/)
+- [How do I switch a window between normal and fullscreen?](https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353)
