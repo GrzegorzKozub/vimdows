@@ -51,6 +51,12 @@ function! vimdows#full_screen_toggle()
     endif
 endfunction
 
+function! vimdows#init_screen_memento()
+    if !exists('g:VIMDOWS_SCREEN["' . v:servername . '"]')
+        call vimdows#save_screen()
+    endif
+endfunction
+
 function! vimdows#save_screen()
     if !exists('g:VIMDOWS_SCREEN')
         let g:VIMDOWS_SCREEN = {}
@@ -60,6 +66,9 @@ function! vimdows#save_screen()
     if !l:maximized && !l:fullScreen
         let g:VIMDOWS_SCREEN[v:servername] = [ &columns, &lines, getwinposx(), getwinposy(), 0, 0 ]
     else
+        if !exists('g:VIMDOWS_SCREEN["' . v:servername . '"]')
+            throw 'Initial screen memento can''t be maximized or full screen'
+        endif
         let g:VIMDOWS_SCREEN[v:servername][4] = l:maximized
         let g:VIMDOWS_SCREEN[v:servername][5] = l:fullScreen
     endif

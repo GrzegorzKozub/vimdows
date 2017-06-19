@@ -31,6 +31,10 @@ if !exists('g:vimdows_screen_memento')
 endif
 
 if g:vimdows_screen_memento
+    augroup InitScreenMementoWhenVimEnters
+        autocmd!
+        autocmd VimEnter * call vimdows#init_screen_memento()
+    augroup END
     augroup SaveScreenWhenVimLeaves
         autocmd!
         autocmd VimLeavePre * call vimdows#save_screen()
