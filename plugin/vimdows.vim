@@ -7,8 +7,8 @@ if !exists('g:vimdows_mappings')
 endif
 
 if g:vimdows_mappings
-    nmap <silent> <F10> :call vimdows#maximized_toggle()<CR>
-    nmap <silent> <F11> :call vimdows#full_screen_toggle()<CR>
+    nnoremap <silent> <F10> :call vimdows#maximized_toggle()<CR>
+    nnoremap <silent> <F11> :call vimdows#full_screen_toggle()<CR>
 endif
 
 if !exists('g:vimdows_background_fixes')
