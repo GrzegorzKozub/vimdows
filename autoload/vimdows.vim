@@ -4,44 +4,44 @@ endif
 
 let s:dll = expand('<sfile>:p:h:h') . '/bin/vimdows' . (has('win64') ? '64' : '32') . '.dll'
 
-function! vimdows#get_screen()
+function! vimdows#get_screen() abort
     return libcall(s:dll, 'GetScreen', '')
 endfunction
 
-function! vimdows#get_maximized()
+function! vimdows#get_maximized() abort
     return libcallnr(s:dll, 'GetMaximized', '')
 endfunction
 
-function! vimdows#get_full_screen()
+function! vimdows#get_full_screen() abort
     return libcallnr(s:dll, 'GetFullScreen', '')
 endfunction
 
-function! vimdows#maximize()
+function! vimdows#maximize() abort
     call libcall(s:dll, 'Maximize', '')
 endfunction
 
-function! vimdows#restore()
+function! vimdows#restore() abort
     call libcall(s:dll, 'Restore', '')
 endfunction
 
-function! vimdows#enter_full_screen()
+function! vimdows#enter_full_screen() abort
     call libcall(s:dll, 'EnterFullScreen', '')
 endfunction
 
-function! vimdows#exit_full_screen()
+function! vimdows#exit_full_screen() abort
     call libcall(s:dll, 'ExitFullScreen', '')
 endfunction
 
-function! vimdows#fix_background()
+function! vimdows#fix_background() abort
     call libcall(s:dll, 'FixBackground', strpart(synIDattr(hlID('Normal'), 'bg#'), 1))
 endfunction
 
-function! vimdows#maximized_toggle()
+function! vimdows#maximized_toggle() abort
     if vimdows#get_full_screen() | return | endif
     if vimdows#get_maximized() | call vimdows#restore() | else | call vimdows#maximize() | endif
 endfunction
 
-function! vimdows#full_screen_toggle()
+function! vimdows#full_screen_toggle() abort
     if vimdows#get_full_screen()
         call vimdows#exit_full_screen()
         call vimdows#restore_screen(0)
@@ -51,13 +51,13 @@ function! vimdows#full_screen_toggle()
     endif
 endfunction
 
-function! vimdows#init_screen_memento()
+function! vimdows#init_screen_memento() abort
     if !exists('g:VIMDOWS_SCREEN["' . v:servername . '"]')
         call vimdows#save_screen()
     endif
 endfunction
 
-function! vimdows#save_screen()
+function! vimdows#save_screen() abort
     if !exists('g:VIMDOWS_SCREEN')
         let g:VIMDOWS_SCREEN = {}
     endif
@@ -74,7 +74,7 @@ function! vimdows#save_screen()
     endif
 endfunction
 
-function! vimdows#restore_screen(allowFullScreen)
+function! vimdows#restore_screen(allowFullScreen) abort
     if !exists('g:VIMDOWS_SCREEN') || !exists('g:VIMDOWS_SCREEN["' . v:servername . '"]')
         return
     endif
