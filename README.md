@@ -48,6 +48,8 @@ if has('win32') && has('gui_running')
 endif
 ```
 
+For this to work best, open your `gvim.exe` properties, on the Compatibility tab press Change high DPI settings button, check Override high DPI scaling behavior checkbox and select Application in the corresponding dropdown.
+
 ## vimdows#get_maximized and vimdows#get_full_screen
 
 Return `1` if GVim is, respectively, maximized or in full screen and `0` otherwise.
