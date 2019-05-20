@@ -1,5 +1,10 @@
-if &compatible || !has('win32') || !has('gui_running') || exists('g:vimdows_plugin_loaded')
+if &compatible || !has('win32') || !(has('gui_running') || exists('g:GuiLoaded')) || exists('g:vimdows_plugin_loaded')
     finish
+endif
+
+if has('nvim')
+  let g:vimdows_plugin_loaded = 1
+  finish
 endif
 
 if !exists('g:vimdows_mappings')

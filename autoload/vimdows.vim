@@ -1,4 +1,4 @@
-if &compatible || !has('win32') || !has('gui_running') || exists('g:vimdows_loaded')
+if &compatible || !has('win32') || !(has('gui_running') || exists('g:GuiLoaded')) || exists('g:vimdows_loaded')
     finish
 endif
 
@@ -7,6 +7,11 @@ let s:dll = expand('<sfile>:p:h:h') . '/bin/vimdows' . (has('win64') ? '64' : '3
 function! vimdows#get_screen() abort
     return libcall(s:dll, 'GetScreen', '')
 endfunction
+
+if has('nvim')
+  let g:vimdows_loaded = 1
+  finish
+endif
 
 function! vimdows#get_maximized() abort
     return libcallnr(s:dll, 'GetMaximized', '')

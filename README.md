@@ -28,27 +28,35 @@ try | rviminfo | catch | endtry
 
 If you don't like this, set `g:vimdows_screen_memento` to `0` to disable this functionality.
 
-# Usage
+# How to use
 
 The plugin provides functions that aim to make GVim experience under Windows nicer. By default, some of them are mapped to keys and some run in a response to GVim events.
 
 ## vimdows#get_screen
 
-Returns a JSON object that describes the current screen resolution and scaling: `{ 'width': 3200, 'height': 1800, 'dpi': 240 }`. Example use:
+This is the only function in this plugin that is compatible with Neovim.
+
+It returns a JSON object that describes the current screen resolution and scaling: `{ 'width': 3200, 'height': 1800, 'dpi': 240 }`. Example use:
 
 ```
 if has('win32') && has('gui_running')
-    let s:screen = eval(vimdows#get_screen())
-    if s:screen.height == 1800 && s:screen.dpi == 240
-        set guifont=Fira\ Code\ Retina:h13
-        set columns=117
-        set lines=29
-        winpos 63 66
-    endif
+  set guifont=Fira\ Code\ Retina:h12
+  let s:screen = eval(vimscreen#get_screen())
+  if s:screen.height == 1800 && s:screen.dpi == 240
+    set columns=127 lines=31
+    winpos 60 62
+  endif
 endif
 ```
 
-For this to work best, open your `gvim.exe` properties, on the Compatibility tab press Change high DPI settings button, check Override high DPI scaling behavior checkbox and select Application in the corresponding dropdown.
+If this function gives you incorrect results, open your `gvim.exe` properties, on the Compatibility tab press Change high DPI settings button, check Override high DPI scaling behavior checkbox and select Application in the corresponding dropdown. Or just import this Registry script:
+
+```
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers]
+"C:\\Program Files\\Neovim\\bin\\nvim-qt.exe"="~ HIGHDPIAWARE"
+```
 
 ## vimdows#get_maximized and vimdows#get_full_screen
 
