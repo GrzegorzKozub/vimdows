@@ -103,6 +103,7 @@ public:
 		SetWindowLong(window, GWL_STYLE, windowStyle | WS_OVERLAPPEDWINDOW);
 		SetWindowPlacement(window, &windowPlacement);
 		SetWindowPos(window, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+		SendMessage(window, WM_SYSCOMMAND, SC_RESTORE, 0);
 	}
 
 	void FixBackground(char *color) {
